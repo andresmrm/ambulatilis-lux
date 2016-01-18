@@ -1,42 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# '''Render map.
-
-# Usage:
-#     ./render.py [options] [<pos>...]
-
-# pos: a position to be rendered. eg: 2_3_0_l
-# When the first number of a position is negative, add an 'x'
-# before it. eg: x-2_3_9
-
-# Options:
-#     -h --help          Show this message.
-#     -t --time=<time>   Render time (s) for each scene [default: 300].
-#     -g --gui           Use Luxrender GUI instead of console.
-# '''
-
-
-# import os
 import re
-# import shelve
 import subprocess
-
-# from docopt import docopt
 
 from consts import scale, z_scale, dx, dy
 
 
 # camera distance from center of pos
-m = scale/4
+dcam = scale/4
 # how much above the position will be the camera
-dz = 1
+dz_cam = 1
 
 all_rots = {
-    'e': (-m, 0),
-    's': (0, m),
-    'w': (m, 0),
-    'n': (0, -m),
+    'e': (-dcam, 0),
+    's': (0, dcam),
+    'w': (dcam, 0),
+    'n': (0, -dcam),
 }
 
 
@@ -56,7 +36,7 @@ def expand_pos(pos):
 
 def to_blender_coords(x, y, z):
     '''Convert to blender coords from game coords.'''
-    return x * scale + dx, y * scale + dy, z / z_scale + dz
+    return x * scale + dx, y * scale + dy, z / z_scale + dz_cam
 
 
 def pos_to_lookats(raw_pos):
@@ -130,10 +110,11 @@ def render_pos(lxs_file, directory, threads=6, gui=False, verbose=False):
     else:
         command = 'luxconsole'
     c = 'cd %s; %s -t %s %s' % (directory, command, threads, lxs_file)
-    if verbose:
-        subprocess.check_output(c, shell=True)
-    else:
-        subprocess.check_output(c, stderr=subprocess.STDOUT, shell=True)
+
+    args = {'shell': True}
+    if not verbose:
+        args['stderr'] = subprocess.STDOUT
+    subprocess.check_output(c, **args)
 
 
 def convert_img(input_file, output_file):
@@ -141,49 +122,3 @@ def convert_img(input_file, output_file):
     # c = 'convert -resize 800x -quality 90 {on}.png {on}.jpg'.format(
     c = 'convert -quality 90 %s %s' % (input_file, output_file)
     subprocess.check_call(c, shell=True)
-
-
-# if __name__ == '__main__':
-#     arguments = docopt(__doc__)
-#     print(arguments)
-
-#     # render_time = int(arguments['--time'])
-
-#     # filename = 'aberto.Scene.00003.lxs'
-#     # outfile = 'temp'
-
-#     arg_pos = arguments.get('<pos>')
-#     if arg_pos:
-#         pos = [p.split('_') for p in arg_pos]
-#     else:
-#         with shelve.open('positions.shelve') as db:
-#             pos = db['positions']
-
-#     # print('minutos: ' + str(len(pos) * 4 * render_time / 60))
-
-#     for p in pos:
-#         # Hack to allow negative X position values.
-#         # Docopt goes crazzy when a position starts with '-'
-#         if (p[0][:2] == 'x-'):
-#             p[0] = p[0][1:]
-
-#         print('processing: ', p, ':', pos.index(p), '/', len(pos))
-#         outname = '_'.join(map(str, p[:3] + [orient]))
-#         lookats = pos_to_lookats(p)
-#         text_base = load_base(
-#             inputfile, outfile, render_time, write_interval)
-#         for lookat, orient in lookats:
-#             render_pos(text_base, lookat, orient, directory, outname)
-#             convert_img(iinn, outt)
-#             print('processed: ' + outname)
-
-
-
-
-# import os
-# fs = os.listdir('.')
-# for f in fs:
-#   if f.find('_o') > -1:
-#     os.rename(f, f.replace('_o', '_w'))
-#   if f.find('_l') > -1:
-#     os.rename(f, f.replace('_l', '_e'))
