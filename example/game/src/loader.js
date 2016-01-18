@@ -24,8 +24,8 @@ function mainInit() {
 
     state.game.stage.backgroundColor = '#000000'
 
-    resize()
-
     initKeyboardInput(move, () => true)
     initMouseInput(move, () => true)
+
+    resize()
 }
