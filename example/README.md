@@ -1,7 +1,13 @@
+## Check online
+
+[Here](https://andresmrm.github.io/ambulatilis-lux/example/game)
+
 ## To render the map
 
 From inside the `blender` folder run:
+
 (change `/path/to/a/store/folder` so it points to an empty folder where LuxRender FLMs files will be stored, allowing to resume the render later)
+
 (the `-t 6` is the number of threads, don't use more than the number of cores in your box)
 
 ```

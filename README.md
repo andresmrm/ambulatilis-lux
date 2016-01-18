@@ -34,13 +34,18 @@ We can enumerate a few limitations:
 - Bandwidth: Currently images are downloaded on-demand. This reduces the total download size if a player doesn't see all directions from all positions, but adds a delay before any non-cached image is displayed. Anyway, downloading lots of images can cost lots of bandwidth.
 - Immutable images: Generally in games the ambient changes and you can see moving objects. Given the pre-rendered nature of this engine, such things are not easy to do here.
 
-## Example
+## Examples
 
+[Here](https://github.com/andresmrm/ambulatilis-lux/tree/master/example) there is a simple example, good to use has a base for new maps. 
+
+And [here](https://github.com/andresmrm/labyrimental) something more complex that maybe can be called a game.
 
 
 ## Install
 
 To model the map and render it you'll need to install [Blender](https://www.blender.org/download), [LuxRender](http://www.luxrender.net/en_GB/standalone) and [LuxBlend](http://www.luxrender.net/en_GB/blender_2_5) (LuxRender exporter for Blender).
+
+For the browser part you will need Node.js. Check the [example](https://github.com/andresmrm/ambulatilis-lux/tree/master/example) to see more info.
 
 
 ## Tips
@@ -53,6 +58,10 @@ Select the camera object and in object data tab set:
 - LuxRender Film > Tonemapper: Linear (manual)
 
 Then try some rendering to adjust "LuxRender Camera > Close" to a good value for your ambient.
+
+### Reduce the effect of discrete rotation
+
+Select the camera object and in object data tab, in the Lens section, change the Focal Length from millimeters to Field of View, and set it to something broader, like 90º.
 
 
 ## Name
