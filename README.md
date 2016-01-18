@@ -29,14 +29,30 @@ Currently the engine is configured to render 4 images (north, east, west, south)
 
 We can enumerate a few limitations:
 
-- Render time: in the example above, if each image takes 1h to render, the whole map will take 20h to render. A big ambient, with hundreds of positions, can take weeks to render...
+- Render time: in the example above, if each image takes 1h to render, the whole map will take 20h to render. A big ambient, with hundreds of positions, can take weeks...
 - Discrete ambient: Currently the engine renders only 4 angles/directions for each position. This means that if the player wants to rotate only 45º, instead of 90º, it won't be possible. The engine can be modified to render more directions for each position, but this means more images to render/store. The player can only walk from positions to position, so it's more like a teleport. Closer positions make waking transition more continuous, but also require more images...
-- Bandwidth: Currently images are downloaded on-demand. This reduces the total download size, but adds a delay before any non-cached image is displayed. Anyway, downloading lots of images can cost lots of bandwidth.
+- Bandwidth: Currently images are downloaded on-demand. This reduces the total download size if a player doesn't see all directions from all positions, but adds a delay before any non-cached image is displayed. Anyway, downloading lots of images can cost lots of bandwidth.
 - Immutable images: Generally in games the ambient changes and you can see moving objects. Given the pre-rendered nature of this engine, such things are not easy to do here.
+
+## Example
+
+
 
 ## Install
 
 To model the map and render it you'll need to install [Blender](https://www.blender.org/download), [LuxRender](http://www.luxrender.net/en_GB/standalone) and [LuxBlend](http://www.luxrender.net/en_GB/blender_2_5) (LuxRender exporter for Blender).
+
+
+## Tips
+
+### Avoid light to change from image to image
+
+Select the camera object and in object data tab set:
+
+- LuxRender Camera > Exposure: Absolute
+- LuxRender Film > Tonemapper: Linear (manual)
+
+Then try some rendering to adjust "LuxRender Camera > Close" to a good value for your ambient.
 
 
 ## Name

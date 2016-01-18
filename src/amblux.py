@@ -43,13 +43,13 @@ import subprocess
 
 from docopt import docopt
 
-# Fix to run in Blender...
-# sys.path.append('.')
-# sys.path.append('../../ambulatilis-lux/src')
-# print(sys.argv)
-# from consts import scale, z_scale, dx, dy
-# from render import (pos_to_lookats, render_pos, load_base,
-#                     convert_img, expand_pos)
+
+FROM_BLENDER_ERROR_MSG = '''
+This script should be called from Blender.
+Like this:
+blender myblend.blend -b -P amblux.py -- --help
+'''
+
 
 # ----------------------------------------------------------
 #               Default Configuration
@@ -57,43 +57,43 @@ from docopt import docopt
 
 # The ID of the objects that will be used in Blender to mark
 # positions where the camera can be should start with this string
-position_id = 'position'
+POSITION_ID = 'position'
 
 # The ID of the objects that will be used in Blender to mark
 # the link between the positions should start with this string
-path_id = 'path'
+PATH_ID = 'path'
 
 # multiplier from positions coords to blender coords
-scale = 5
+SCALE = 5
 
 # multiplier for the z coord
-z_scale = 2
+Z_SCALE = 2
 
 # X adder from positions coords (scaled) to blender coords
-dx = scale/2
+DX = SCALE/2
 
 # Y adder from positions coords (scaled) to blender coords
-dy = scale/2
+DY = SCALE/2
 
 # Z subtractor when converting from Blender coordinates.
 # E.g.: If this value is set to 0.05, all objects with center in z=0.05
 # will be converted to z=0.
-dz_pos = 0.05
+DZ_POS = 0.05
 
 # distance between path center and positions center
-pd = scale/2
+PD = SCALE/2
 
 # camera distance from center of position
-dcam = scale/4
+DCAM = SCALE/4
 
 # how much above the position will be the camera
 dz_cam = 1
 
 all_rots = {
-    'e': (-dcam, 0),
-    's': (0, dcam),
-    'w': (dcam, 0),
-    'n': (0, -dcam),
+    'e': (-DCAM, 0),
+    's': (0, DCAM),
+    'w': (DCAM, 0),
+    'n': (0, -DCAM),
 }
 
 # ----------------------------------------------------------
@@ -101,16 +101,16 @@ all_rots = {
 
 def to_blender_coords(x, y, z):
     '''Convert to blender coords from game coords.'''
-    return (x * scale + dx,
-            y * scale + dy,
-            z / z_scale + dz_cam)
+    return (x * SCALE + DX,
+            y * SCALE + DY,
+            z / Z_SCALE + dz_cam)
 
 
 def from_blender_coords(x, y, z):
     '''Convert from blender coords to game coords.'''
-    return (int((x-dx)/scale),
-            int((y-dy)/scale),
-            int(round((z-dz_pos)*z_scale, 0)))
+    return (int((x-DX)/SCALE),
+            int((y-DY)/SCALE),
+            int(round((z-DZ_POS)*Z_SCALE, 0)))
 
 
 def expand_pos(pos):
@@ -154,9 +154,14 @@ def load_base(input_file, output_file, luxoutname, render_time,
                       base, flags=re.M)
 
         # set render time
-        base = re.sub('"integer halttime".+$',
-                      '"integer halttime" [%s]' % str(render_time),
-                      base, flags=re.M)
+        ht_pattern = '"integer halttime".+$'
+        ht_str = '"integer halttime" [%s]' % str(render_time)
+        if re.search(ht_pattern, base):
+            base = re.sub(ht_pattern, ht_str, base, flags=re.M)
+        else:
+            end_pattern = '\n\nWorldBegin'
+            new_end = '\n\t%s\n%s' % (ht_str, end_pattern)
+            base = re.sub(end_pattern, new_end, base, flags=re.M)
 
         # set write flm
         base = re.sub('"bool write_resume_flm".+$',
@@ -227,21 +232,21 @@ def position_links(obj):
     obj_links = {}
     ox, oy, oz = round_all(obj.location)
     # check in which directions the position is linked
-    for path in filter_objs_name(path_id):
+    for path in filter_objs_name(PATH_ID):
         px, py, pz = round_all(path.location)
         if px == ox:
-            if py == oy + pd:
-                obj_links['n'] = from_blender_coords(ox, oy + scale,
+            if py == oy + PD:
+                obj_links['n'] = from_blender_coords(ox, oy + SCALE,
                                                      oz + (pz - oz)*2)
-            if py == oy - pd:
-                obj_links['s'] = from_blender_coords(ox, oy - scale,
+            if py == oy - PD:
+                obj_links['s'] = from_blender_coords(ox, oy - SCALE,
                                                      oz + (pz - oz)*2)
         if py == oy:
-            if px == ox + pd:
-                obj_links['e'] = from_blender_coords(ox + scale, oy,
+            if px == ox + PD:
+                obj_links['e'] = from_blender_coords(ox + SCALE, oy,
                                                      oz + (pz - oz)*2)
-            if px == ox - pd:
-                obj_links['w'] = from_blender_coords(ox - scale, oy,
+            if px == ox - PD:
+                obj_links['w'] = from_blender_coords(ox - SCALE, oy,
                                                      oz + (pz - oz)*2)
     return obj_links
 
@@ -250,7 +255,7 @@ def extract_positions():
     links = {}
     positions = []
     # find positions
-    for obj in filter_objs_name(position_id):
+    for obj in filter_objs_name(POSITION_ID):
         x, y, z = from_blender_coords(*obj.location)
         positions.append([x, y, z])
 
@@ -307,7 +312,7 @@ def map_to_json(links, outfolder):
     s = 'var map = %s\nexport default map' % json.dumps(links)
     # s = 'export var map = %s\n' % json.dumps(positions)
     # s += 'export var links = %s\n' % json.dumps(links)
-    arq = open('%smap.js' % outfolder, 'w')
+    arq = open(os.path.join(outfolder, 'map.js'), 'w')
     arq.write(s)
     arq.close()
 
@@ -384,7 +389,11 @@ def process(arg_names, zones, force_export):
 
 
 if __name__ == '__main__':
-    import bpy
+    try:
+        import bpy
+    except:
+        print(FROM_BLENDER_ERROR_MSG)
+        exit()
     argv = sys.argv
     argv = argv[argv.index("--") + 1:]  # get all args after "--"
     arguments = docopt(__doc__, argv)
