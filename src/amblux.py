@@ -348,44 +348,45 @@ def get_pos_list(zones, name):
     return rest_pos(zones)
 
 
-def process(arg_names, zones, force_export):
-    for name in arg_names:
+def process(name, zones, force_export):
+    if not name:
+        name = 'noname'
 
-        if not name:
-            name = 'noname'
+    print('ZONE:', name)
+    directory = os.path.join(arg_dir, name)
+    inputfile = os.path.join(directory, name + '.lxs')
 
-        print('ZONE:', name)
-        directory = os.path.join(arg_dir, name)
-        inputfile = os.path.join(directory, name + '.lxs')
-
-        if force_export:
+    if force_export:
+        try:
             shutil.rmtree(directory)
+        except:
+            pass
 
-        if not os.path.exists(directory):
-            os.makedirs(os.path.join(directory, outdir))
-            force_export = True
-        elif not os.path.exists(inputfile):
-            force_export = True
+    if not os.path.exists(directory):
+        os.makedirs(os.path.join(directory, outdir))
+        force_export = True
+    elif not os.path.exists(inputfile):
+        force_export = True
 
-        if force_export:
-            export_part(zones, name, directory)
+    if force_export:
+        export_part(zones, name, directory)
 
-        pos = get_pos_list(zones, name)
+    pos = get_pos_list(zones, name)
 
-        for p in pos:
-            lookats = pos_to_lookats(p)
-            for lookat, orient in lookats:
-                outname = '_'.join(map(str, p[:3] + [orient]))
-                # Luxrender will create <luxoutname>.png and <luxoutname>.flm
-                luxoutname = os.path.join(directory, outdir, outname)
-                outfile = os.path.join(directory, 'temp.lxs')
+    for p in pos:
+        lookats = pos_to_lookats(p)
+        for lookat, orient in lookats:
+            outname = '_'.join(map(str, p[:3] + [orient]))
+            # Luxrender will create <luxoutname>.png and <luxoutname>.flm
+            luxoutname = os.path.join(directory, outdir, outname)
+            outfile = os.path.join(directory, 'temp.lxs')
 
-                load_base(inputfile, outfile, luxoutname,
-                          render_time, write_interval, lookat)
-                print('processing: ', p, ':', pos.index(p) + 1, '/', len(pos))
-                render_pos(outfile, directory, threads, gui, verbose)
-                convert_img(luxoutname + '.png',
-                            os.path.join(outfolder, outname + '.jpg'))
+            load_base(inputfile, outfile, luxoutname,
+                      render_time, write_interval, lookat)
+            print('processing: ', p, ':', pos.index(p) + 1, '/', len(pos))
+            render_pos(outfile, directory, threads, gui, verbose)
+            convert_img(luxoutname + '.png',
+                        os.path.join(outfolder, outname + '.jpg'))
 
 
 if __name__ == '__main__':
@@ -431,4 +432,5 @@ if __name__ == '__main__':
         _, links = extract_positions()
         map_to_json(links, outfolder)
 
-    process(arg_names, zones, force_export)
+    for name in arg_names:
+        process(name, zones, force_export)
