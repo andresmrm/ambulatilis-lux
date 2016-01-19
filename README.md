@@ -140,5 +140,5 @@ Select the camera object and in object data tab, in the Lens section, change the
 
 ## Name
 
-The name should mean something like [walking/moving](http://www.latin-dictionary.net/definition/2956/ambulatilis-ambulatilis-ambulatile) light in Latin.
+The name "Ambulatilis Lux" should mean something like [walking/moving](http://www.latin-dictionary.net/definition/2956/ambulatilis-ambulatilis-ambulatile) light in Latin.
 It's somehow a reference to LuxRender. :-)
