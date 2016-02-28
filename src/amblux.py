@@ -31,6 +31,8 @@ Options:
     -v --verbose            Verbose Luxrender.
     -f --force-export       If should force export of zones. If not try to
                             continue old renders.
+    -l --luxrender-folder=<luxrender-folder>
+                            Folder with Luxrender and Luxconsole binaries.
 '''
 
 import re
@@ -193,13 +195,19 @@ def load_base(input_file, output_file, luxoutname, render_time,
     return base
 
 
-def render_pos(lxs_file, directory, threads=6, gui=False, verbose=False):
+def render_pos(lxs_file, directory, threads=6, gui=False, verbose=False,
+               luxrender_folder=None):
     '''Render a LXS file. Change to directory first.'''
 
     if gui:
         command = 'luxrender'
     else:
         command = 'luxconsole'
+
+    # Custom path for luxrender and luxconsole binaries
+    if luxrender_folder:
+        command = os.path.join(luxrender_folder, command)
+
     c = 'cd %s; %s -t %s %s' % (directory, command, threads, lxs_file)
 
     args = {'shell': True}
@@ -348,7 +356,7 @@ def get_pos_list(zones, name):
     return rest_pos(zones)
 
 
-def process(name, zones, force_export):
+def process(name, zones, force_export, luxrender_folder):
     if not name:
         name = 'noname'
 
@@ -384,7 +392,8 @@ def process(name, zones, force_export):
             load_base(inputfile, outfile, luxoutname,
                       render_time, write_interval, lookat)
             print('processing: ', p, ':', pos.index(p) + 1, '/', len(pos))
-            render_pos(outfile, directory, threads, gui, verbose)
+            render_pos(outfile, directory, threads, gui, verbose,
+                       luxrender_folder)
             convert_img(luxoutname + '.png',
                         os.path.join(outfolder, outname + '.jpg'))
 
@@ -401,6 +410,7 @@ if __name__ == '__main__':
 
     config_file = arguments['--config']
     if config_file:
+        print('found zone file')
         zones = load_config(config_file)
     else:
         zones = None
@@ -426,6 +436,7 @@ if __name__ == '__main__':
     force_export = arguments.get('--force-export')
     gui = arguments.get('--gui')
     verbose = arguments.get('--verbose')
+    luxrender_folder = arguments.get('--luxrender-folder')
 
     # Export a JSON with positions links to be used by the JS client
     if arguments.get('--export-json'):
@@ -433,4 +444,4 @@ if __name__ == '__main__':
         map_to_json(links, outfolder)
 
     for name in arg_names:
-        process(name, zones, force_export)
+        process(name, zones, force_export, luxrender_folder)
